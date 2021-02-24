@@ -8,7 +8,7 @@ with open("LICENSE") as f:
 
 setup(
     name="vnoise",
-    version="0.1.0",
+    version="0.1.0a0",
     description="Vectorized, pure-Python Perlin noise library",
     long_description=readme,
     long_description_content_type="text/markdown",
@@ -17,7 +17,9 @@ setup(
     url="https://github.com/vpype/vnoise",
     license=license_file,
     packages=["vnoise"],
+    python_requires=">=3.6",
     install_requires=[
-        "numpy>=1.20.0",
+        "numpy>=1.19",
+        "setuptools",
     ],
 )

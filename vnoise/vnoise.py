@@ -1,914 +1,447 @@
-# Code is derived from the C noise code:
-# Copyright (c) 2008, Casey Duncan (casey dot duncan at gmail dot com)
-# MIT LICENSE.
-# This port is also, MIT LICENSE.
+import random
 from numbers import Number
+from typing import Optional, Sequence, Union, overload
 
 import numpy as np
 
-M_1_PI = 0.31830988618379067154
-
-GRAD3 = np.array(
-    (
-        (1, 1, 0),
-        (-1, 1, 0),
-        (1, -1, 0),
-        (-1, -1, 0),
-        (1, 0, 1),
-        (-1, 0, 1),
-        (1, 0, -1),
-        (-1, 0, -1),
-        (0, 1, 1),
-        (0, -1, 1),
-        (0, 1, -1),
-        (0, -1, -1),
-        (1, 0, -1),
-        (-1, 0, -1),
-        (0, -1, 1),
-        (0, 1, 1),
-    ),
-    dtype=int,
-)
-
-GRAD4 = (
-    (0, 1, 1, 1),
-    (0, 1, 1, -1),
-    (0, 1, -1, 1),
-    (0, 1, -1, -1),
-    (0, -1, 1, 1),
-    (0, -1, 1, -1),
-    (0, -1, -1, 1),
-    (0, -1, -1, -1),
-    (1, 0, 1, 1),
-    (1, 0, 1, -1),
-    (1, 0, -1, 1),
-    (1, 0, -1, -1),
-    (-1, 0, 1, 1),
-    (-1, 0, 1, -1),
-    (-1, 0, -1, 1),
-    (-1, 0, -1, -1),
-    (1, 1, 0, 1),
-    (1, 1, 0, -1),
-    (1, -1, 0, 1),
-    (1, -1, 0, -1),
-    (-1, 1, 0, 1),
-    (-1, 1, 0, -1),
-    (-1, -1, 0, 1),
-    (-1, -1, 0, -1),
-    (1, 1, 1, 0),
-    (1, 1, -1, 0),
-    (1, -1, 1, 0),
-    (1, -1, -1, 0),
-    (-1, 1, 1, 0),
-    (-1, 1, -1, 0),
-    (-1, -1, 1, 0),
-    (-1, -1, -1, 0),
-)
-
-PERM = np.array(
-    (
-        151,
-        160,
-        137,
-        91,
-        90,
-        15,
-        131,
-        13,
-        201,
-        95,
-        96,
-        53,
-        194,
-        233,
-        7,
-        225,
-        140,
-        36,
-        103,
-        30,
-        69,
-        142,
-        8,
-        99,
-        37,
-        240,
-        21,
-        10,
-        23,
-        190,
-        6,
-        148,
-        247,
-        120,
-        234,
-        75,
-        0,
-        26,
-        197,
-        62,
-        94,
-        252,
-        219,
-        203,
-        117,
-        35,
-        11,
-        32,
-        57,
-        177,
-        33,
-        88,
-        237,
-        149,
-        56,
-        87,
-        174,
-        20,
-        125,
-        136,
-        171,
-        168,
-        68,
-        175,
-        74,
-        165,
-        71,
-        134,
-        139,
-        48,
-        27,
-        166,
-        77,
-        146,
-        158,
-        231,
-        83,
-        111,
-        229,
-        122,
-        60,
-        211,
-        133,
-        230,
-        220,
-        105,
-        92,
-        41,
-        55,
-        46,
-        245,
-        40,
-        244,
-        102,
-        143,
-        54,
-        65,
-        25,
-        63,
-        161,
-        1,
-        216,
-        80,
-        73,
-        209,
-        76,
-        132,
-        187,
-        208,
-        89,
-        18,
-        169,
-        200,
-        196,
-        135,
-        130,
-        116,
-        188,
-        159,
-        86,
-        164,
-        100,
-        109,
-        198,
-        173,
-        186,
-        3,
-        64,
-        52,
-        217,
-        226,
-        250,
-        124,
-        123,
-        5,
-        202,
-        38,
-        147,
-        118,
-        126,
-        255,
-        82,
-        85,
-        212,
-        207,
-        206,
-        59,
-        227,
-        47,
-        16,
-        58,
-        17,
-        182,
-        189,
-        28,
-        42,
-        223,
-        183,
-        170,
-        213,
-        119,
-        248,
-        152,
-        2,
-        44,
-        154,
-        163,
-        70,
-        221,
-        153,
-        101,
-        155,
-        167,
-        43,
-        172,
-        9,
-        129,
-        22,
-        39,
-        253,
-        19,
-        98,
-        108,
-        110,
-        79,
-        113,
-        224,
-        232,
-        178,
-        185,
-        112,
-        104,
-        218,
-        246,
-        97,
-        228,
-        251,
-        34,
-        242,
-        193,
-        238,
-        210,
-        144,
-        12,
-        191,
-        179,
-        162,
-        241,
-        81,
-        51,
-        145,
-        235,
-        249,
-        14,
-        239,
-        107,
-        49,
-        192,
-        214,
-        31,
-        181,
-        199,
-        106,
-        157,
-        184,
-        84,
-        204,
-        176,
-        115,
-        121,
-        50,
-        45,
-        127,
-        4,
-        150,
-        254,
-        138,
-        236,
-        205,
-        93,
-        222,
-        114,
-        67,
-        29,
-        24,
-        72,
-        243,
-        141,
-        128,
-        195,
-        78,
-        66,
-        215,
-        61,
-        156,
-        180,
-        151,
-        160,
-        137,
-        91,
-        90,
-        15,
-        131,
-        13,
-        201,
-        95,
-        96,
-        53,
-        194,
-        233,
-        7,
-        225,
-        140,
-        36,
-        103,
-        30,
-        69,
-        142,
-        8,
-        99,
-        37,
-        240,
-        21,
-        10,
-        23,
-        190,
-        6,
-        148,
-        247,
-        120,
-        234,
-        75,
-        0,
-        26,
-        197,
-        62,
-        94,
-        252,
-        219,
-        203,
-        117,
-        35,
-        11,
-        32,
-        57,
-        177,
-        33,
-        88,
-        237,
-        149,
-        56,
-        87,
-        174,
-        20,
-        125,
-        136,
-        171,
-        168,
-        68,
-        175,
-        74,
-        165,
-        71,
-        134,
-        139,
-        48,
-        27,
-        166,
-        77,
-        146,
-        158,
-        231,
-        83,
-        111,
-        229,
-        122,
-        60,
-        211,
-        133,
-        230,
-        220,
-        105,
-        92,
-        41,
-        55,
-        46,
-        245,
-        40,
-        244,
-        102,
-        143,
-        54,
-        65,
-        25,
-        63,
-        161,
-        1,
-        216,
-        80,
-        73,
-        209,
-        76,
-        132,
-        187,
-        208,
-        89,
-        18,
-        169,
-        200,
-        196,
-        135,
-        130,
-        116,
-        188,
-        159,
-        86,
-        164,
-        100,
-        109,
-        198,
-        173,
-        186,
-        3,
-        64,
-        52,
-        217,
-        226,
-        250,
-        124,
-        123,
-        5,
-        202,
-        38,
-        147,
-        118,
-        126,
-        255,
-        82,
-        85,
-        212,
-        207,
-        206,
-        59,
-        227,
-        47,
-        16,
-        58,
-        17,
-        182,
-        189,
-        28,
-        42,
-        223,
-        183,
-        170,
-        213,
-        119,
-        248,
-        152,
-        2,
-        44,
-        154,
-        163,
-        70,
-        221,
-        153,
-        101,
-        155,
-        167,
-        43,
-        172,
-        9,
-        129,
-        22,
-        39,
-        253,
-        19,
-        98,
-        108,
-        110,
-        79,
-        113,
-        224,
-        232,
-        178,
-        185,
-        112,
-        104,
-        218,
-        246,
-        97,
-        228,
-        251,
-        34,
-        242,
-        193,
-        238,
-        210,
-        144,
-        12,
-        191,
-        179,
-        162,
-        241,
-        81,
-        51,
-        145,
-        235,
-        249,
-        14,
-        239,
-        107,
-        49,
-        192,
-        214,
-        31,
-        181,
-        199,
-        106,
-        157,
-        184,
-        84,
-        204,
-        176,
-        115,
-        121,
-        50,
-        45,
-        127,
-        4,
-        150,
-        254,
-        138,
-        236,
-        205,
-        93,
-        222,
-        114,
-        67,
-        29,
-        24,
-        72,
-        243,
-        141,
-        128,
-        195,
-        78,
-        66,
-        215,
-        61,
-        156,
-        180,
-    ),
-    dtype=int,
-)
-
-SIMPLEX = (
-    (0, 1, 2, 3),
-    (0, 1, 3, 2),
-    (0, 0, 0, 0),
-    (0, 2, 3, 1),
-    (0, 0, 0, 0),
-    (0, 0, 0, 0),
-    (0, 0, 0, 0),
-    (1, 2, 3, 0),
-    (0, 2, 1, 3),
-    (0, 0, 0, 0),
-    (0, 3, 1, 2),
-    (0, 3, 2, 1),
-    (0, 0, 0, 0),
-    (0, 0, 0, 0),
-    (0, 0, 0, 0),
-    (1, 3, 2, 0),
-    (0, 0, 0, 0),
-    (0, 0, 0, 0),
-    (0, 0, 0, 0),
-    (0, 0, 0, 0),
-    (0, 0, 0, 0),
-    (0, 0, 0, 0),
-    (0, 0, 0, 0),
-    (0, 0, 0, 0),
-    (1, 2, 0, 3),
-    (0, 0, 0, 0),
-    (1, 3, 0, 2),
-    (0, 0, 0, 0),
-    (0, 0, 0, 0),
-    (0, 0, 0, 0),
-    (2, 3, 0, 1),
-    (2, 3, 1, 0),
-    (1, 0, 2, 3),
-    (1, 0, 3, 2),
-    (0, 0, 0, 0),
-    (0, 0, 0, 0),
-    (0, 0, 0, 0),
-    (2, 0, 3, 1),
-    (0, 0, 0, 0),
-    (2, 1, 3, 0),
-    (0, 0, 0, 0),
-    (0, 0, 0, 0),
-    (0, 0, 0, 0),
-    (0, 0, 0, 0),
-    (0, 0, 0, 0),
-    (0, 0, 0, 0),
-    (0, 0, 0, 0),
-    (0, 0, 0, 0),
-    (2, 0, 1, 3),
-    (0, 0, 0, 0),
-    (0, 0, 0, 0),
-    (0, 0, 0, 0),
-    (3, 0, 1, 2),
-    (3, 0, 2, 1),
-    (0, 0, 0, 0),
-    (3, 1, 2, 0),
-    (2, 1, 0, 3),
-    (0, 0, 0, 0),
-    (0, 0, 0, 0),
-    (0, 0, 0, 0),
-    (3, 1, 0, 2),
-    (0, 0, 0, 0),
-    (3, 2, 0, 1),
-    (3, 2, 1, 0),
-)
+from ._tables import GRAD3, PERM
 
 
-def lerp(t, a, b):
+def _lerp(t, a, b):
     return a + t * (b - a)
 
 
-def grad1(hash: int, x: float):
-    g = (hash & 7) + 1.0
-    if hash & 8:
-        g = -1
-    return g * x
+def _grad1(
+    hash_value: Union[int, np.array], x: Union[float, np.array]
+) -> Union[float, np.array]:
+    g = GRAD3[hash_value & 15]
+    return x * g[..., 0]
 
 
-def noise1(x: float, repeat: int, base: int) -> float:
-    fx = 0.0
-    i = int(np.floor(x) % repeat)
-    ii = (i + 1) % repeat
-    i = (i & 255) + base
-    ii = (ii & 255) + base
-    x -= np.floor(x)
-    fx = x * x * x * (x * (x * 6 - 15) + 10)
-    return lerp(fx, grad1(PERM[i], x), grad1(PERM[ii], x - 1)) * 0.4
+def _grad2(
+    hash_value: Union[int, np.array],
+    x: Union[float, np.array],
+    y: Union[float, np.array],
+) -> Union[float, np.array]:
+    g = GRAD3[:, 0:2][hash_value & 15]
+    return x * g[..., 0] + y * g[..., 1]
 
 
-def grad2(hash: int, x: float, y: float) -> float:
-    h = hash & 15
-    return x * GRAD3[h][0] + y * GRAD3[h][1]
-
-
-def noise2(x: float, y: float, repeatx: float, repeaty: float, base: int) -> float:
-    i = int(np.floor(np.fmod(x, repeatx)))
-    j = int(np.floor(np.fmod(y, repeaty)))
-    ii = int(np.fmod(i + 1, repeatx))
-    jj = int(np.fmod(j + 1, repeaty))
-    i = (i & 255) + base
-    j = (j & 255) + base
-    ii = (ii & 255) + base
-    jj = (jj & 255) + base
-
-    x -= np.floor(x)
-    y -= np.floor(y)
-    fx = x * x * x * (x * (x * 6 - 15) + 10)
-    fy = y * y * y * (y * (y * 6 - 15) + 10)
-
-    A = PERM[i]
-    AA = PERM[A + j]
-    AB = PERM[A + jj]
-    B = PERM[ii]
-    BA = PERM[B + j]
-    BB = PERM[B + jj]
-
-    return lerp(
-        fy,
-        lerp(fx, grad2(PERM[AA], x, y), grad2(PERM[BA], x - 1, y)),
-        lerp(fx, grad2(PERM[AB], x, y - 1), grad2(PERM[BB], x - 1, y - 1)),
-    )
-
-
-def grad3(hash: int, x: float, y: float, z: float) -> float:
-    g = GRAD3[hash & 15]
+def _grad3(
+    hash_value: Union[int, np.array],
+    x: Union[float, np.array],
+    y: Union[float, np.array],
+    z: Union[float, np.array],
+) -> Union[float, np.array]:
+    g = GRAD3[hash_value & 15]
     return x * g[..., 0] + y * g[..., 1] + z * g[..., 2]
 
 
-def noise3(
-    x: float, y: float, z: float, repeatx: int, repeaty: int, repeatz: int, base: int
-) -> float:
-    """
-    NOTE: modifes x, y z!!
-    Args:
-        x:
-        y:
-        z:
-        repeatx:
-        repeaty:
-        repeatz:
-        base:
+class Noise:
+    def __init__(self, seed: Optional[int] = None):
 
-    Returns:
+        if seed is not None:
+            self.seed(seed)
+        else:
+            self._set_perm(PERM)
 
-    """
-    i = np.array(np.floor(np.fmod(x, repeatx)), dtype=int)
-    j = np.array(np.floor(np.fmod(y, repeaty)), dtype=int)
-    k = np.array(np.floor(np.fmod(z, repeatz)), dtype=int)
-    ii = np.fmod(i + 1, repeatx)
-    jj = np.fmod(j + 1, repeaty)
-    kk = np.fmod(k + 1, repeatz)
+    def seed(self, s: int):
+        perm = list(PERM)
+        random.Random(s).shuffle(perm)
+        self._set_perm(perm)
 
-    i = (i & 255) + base
-    j = (j & 255) + base
-    k = (k & 255) + base
-    ii = (ii & 255) + base
-    jj = (jj & 255) + base
-    kk = (kk & 255) + base
+    def _set_perm(self, perm: Sequence[int]) -> None:
+        self._perm = np.array(perm * 2, dtype=np.uint8)
 
-    x -= np.floor(x)
-    y -= np.floor(y)
-    z -= np.floor(z)
+    def _noise1_impl(
+        self, x: Union[float, np.array], repeat: int, base: int
+    ) -> Union[float, np.array]:
+        i = np.floor(np.fmod(x, repeat)).astype(int)
+        ii = np.fmod(i + 1, repeat)
+        i = (i & 255) + base
+        ii = (ii & 255) + base
+        x = x - np.floor(x)
+        fx = x * x * x * (x * (x * 6 - 15) + 10)
+        # the triple nested self._perm is required so that noise1(x) == noise2(x, 0.)
+        return _lerp(
+            fx,
+            _grad1(self._perm[self._perm[self._perm[i]]], x),
+            _grad1(self._perm[self._perm[self._perm[ii]]], x - 1),
+        )
 
-    x1 = x - 1
-    y1 = y - 1
-    z1 = z - 1
+    def _noise2_impl(
+        self,
+        x: Union[float, np.array],
+        y: Union[float, np.array],
+        repeat_x: int,
+        repeat_y: int,
+        base: int,
+        grid_mode: bool,
+    ) -> Union[float, np.array]:
+        i = np.floor(np.fmod(x, repeat_x)).astype(int)
+        j = np.floor(np.fmod(y, repeat_y)).astype(int)
+        ii = np.fmod(i + 1, repeat_x)
+        jj = np.fmod(j + 1, repeat_y)
 
-    # TODO: add no grid mode
-    if not (isinstance(x, Number) and isinstance(y, Number) and isinstance(z, Number)):
-        x, y, z = np.meshgrid(x, y, z, indexing="ij", copy=False)
-        x1, y1, z1 = np.meshgrid(x1, y1, z1, indexing="ij", copy=False)
-        i, j, k = np.meshgrid(i, j, k, indexing="ij", copy=False)
-        ii, jj, kk = np.meshgrid(ii, jj, kk, indexing="ij", copy=False)
-        single = False
-    else:
-        single = True
+        i = (i & 255) + base
+        j = (j & 255) + base
+        ii = (ii & 255) + base
+        jj = (jj & 255) + base
 
-    fx = x * x * x * (x * (x * 6 - 15) + 10)
-    fy = y * y * y * (y * (y * 6 - 15) + 10)
-    fz = z * z * z * (z * (z * 6 - 15) + 10)
+        x = x - np.floor(x)
+        y = y - np.floor(y)
 
-    A = PERM[i]
-    AA = PERM[A + j]
-    AB = PERM[A + jj]
-    B = PERM[ii]
-    BA = PERM[B + j]
-    BB = PERM[B + jj]
+        x1 = x - 1
+        y1 = y - 1
 
-    return lerp(
-        fz,
-        lerp(
+        if grid_mode:
+            x, y = np.meshgrid(x, y, indexing="ij", copy=False)
+            x1, y1 = np.meshgrid(x1, y1, indexing="ij", copy=False)
+            i, j = np.meshgrid(i, j, indexing="ij", copy=False)
+            ii, jj = np.meshgrid(ii, jj, indexing="ij", copy=False)
+
+        fx = x * x * x * (x * (x * 6 - 15) + 10)
+        fy = y * y * y * (y * (y * 6 - 15) + 10)
+
+        A = self._perm[i]
+        AA = self._perm[A + j]
+        AB = self._perm[A + jj]
+        B = self._perm[ii]
+        BA = self._perm[B + j]
+        BB = self._perm[B + jj]
+
+        return _lerp(
             fy,
-            lerp(fx, grad3(PERM[AA + k], x, y, z), grad3(PERM[BA + k], x1, y, z)),
-            lerp(fx, grad3(PERM[AB + k], x, y1, z), grad3(PERM[BB + k], x1, y1, z)),
-        ),
-        lerp(
-            fy,
-            lerp(fx, grad3(PERM[AA + kk], x, y, z1), grad3(PERM[BA + kk], x1, y, z1)),
-            lerp(
-                fx,
-                grad3(PERM[AB + kk], x, y1, z1),
-                grad3(PERM[BB + kk], x1, y1, z1),
+            _lerp(fx, _grad2(self._perm[AA], x, y), _grad2(self._perm[BA], x1, y)),
+            _lerp(fx, _grad2(self._perm[AB], x, y1), _grad2(self._perm[BB], x1, y1)),
+        )
+
+    def _noise3_impl(
+        self,
+        x: Union[float, np.array],
+        y: Union[float, np.array],
+        z: Union[float, np.array],
+        repeat_x: int,
+        repeat_y: int,
+        repeat_z: int,
+        base: int,
+        grid_mode: bool,
+    ) -> Union[float, np.array]:
+        i = np.floor(np.fmod(x, repeat_x)).astype(int)
+        j = np.floor(np.fmod(y, repeat_y)).astype(int)
+        k = np.floor(np.fmod(z, repeat_z)).astype(int)
+        ii = np.fmod(i + 1, repeat_x)
+        jj = np.fmod(j + 1, repeat_y)
+        kk = np.fmod(k + 1, repeat_z)
+
+        i = (i & 255) + base
+        j = (j & 255) + base
+        k = (k & 255) + base
+        ii = (ii & 255) + base
+        jj = (jj & 255) + base
+        kk = (kk & 255) + base
+
+        x = x - np.floor(x)
+        y = y - np.floor(y)
+        z = z - np.floor(z)
+
+        x1 = x - 1
+        y1 = y - 1
+        z1 = z - 1
+
+        if grid_mode:
+            x, y, z = np.meshgrid(x, y, z, indexing="ij", copy=False)
+            x1, y1, z1 = np.meshgrid(x1, y1, z1, indexing="ij", copy=False)
+            i, j, k = np.meshgrid(i, j, k, indexing="ij", copy=False)
+            ii, jj, kk = np.meshgrid(ii, jj, kk, indexing="ij", copy=False)
+
+        fx = x * x * x * (x * (x * 6 - 15) + 10)
+        fy = y * y * y * (y * (y * 6 - 15) + 10)
+        fz = z * z * z * (z * (z * 6 - 15) + 10)
+
+        A = self._perm[i]
+        AA = self._perm[A + j]
+        AB = self._perm[A + jj]
+        B = self._perm[ii]
+        BA = self._perm[B + j]
+        BB = self._perm[B + jj]
+
+        return _lerp(
+            fz,
+            _lerp(
+                fy,
+                _lerp(
+                    fx,
+                    _grad3(self._perm[AA + k], x, y, z),
+                    _grad3(self._perm[BA + k], x1, y, z),
+                ),
+                _lerp(
+                    fx,
+                    _grad3(self._perm[AB + k], x, y1, z),
+                    _grad3(self._perm[BB + k], x1, y1, z),
+                ),
             ),
-        ),
-    )
+            _lerp(
+                fy,
+                _lerp(
+                    fx,
+                    _grad3(self._perm[AA + kk], x, y, z1),
+                    _grad3(self._perm[BA + kk], x1, y, z1),
+                ),
+                _lerp(
+                    fx,
+                    _grad3(self._perm[AB + kk], x, y1, z1),
+                    _grad3(self._perm[BB + kk], x1, y1, z1),
+                ),
+            ),
+        )
 
+    @overload
+    def noise1(
+        self,
+        x: np.array,
+        octaves: int = 1,
+        persistence: float = 0.5,
+        lacunarity: float = 2.0,
+        repeat: int = 1024,
+        base: int = 0,
+    ) -> np.array:
+        ...
 
-def py_noise1(x=None, octaves=1, persistence=0.5, lacunarity=2.0, repeat=1024, base=0):
-    """1 dimensional perlin improved noise function (see noise3 for more info)"""
-    if octaves == 1:
-        # Single octave, return simple noise
-        return noise1(x, repeat, base)
-    elif octaves > 1:
-        i = 0
-        freq = 1.0
-        amp = 1.0
-        max = 0.0
-        total = 0.0
-        for i in range(0, octaves):
-            total += noise1(x * freq, int(repeat * freq), base) * amp
-            max += amp
-            freq *= lacunarity
-            amp *= persistence
-        return total / max
-    else:
-        raise ValueError("Expected octaves value > 0")
+    @overload
+    def noise1(
+        self,
+        x: float,
+        octaves: int = 1,
+        persistence: float = 0.5,
+        lacunarity: float = 2.0,
+        repeat: int = 1024,
+        base: int = 0,
+    ) -> float:
+        ...
 
+    def noise1(self, x, octaves=1, persistence=0.5, lacunarity=2.0, repeat=1024, base=0):
+        scalar = isinstance(x, Number)
 
-def py_noise2(
-    x, y, octaves=1, persistence=0.5, lacunarity=2.0, repeatx=1024, repeaty=1024, base=0
-):
-    """2 dimensional perlin improved noise function (see noise3 for more info)"""
-    if octaves == 1:
-        # Single octave, return simple noise
-        return noise2(x, y, repeatx, repeaty, base)
-    elif octaves > 1:
-        freq = 1.0
-        amp = 1.0
-        max = 0.0
-        total = 0.0
-        for i in range(0, octaves):
-            total += noise2(x * freq, y * freq, repeatx * freq, repeaty * freq, base) * amp
-            max += amp
-            freq *= lacunarity
-            amp *= persistence
-        return total / max
-    else:
-        raise ValueError("Expected octaves value > 0")
+        if not scalar:
+            x = np.array(x, dtype=float)
 
+        if octaves == 1:
+            res = self._noise1_impl(x, repeat, base)
+        elif octaves > 1:
+            freq = 1.0
+            ampl = 1.0
+            max_ampl = 0.0
+            total = 0.0
+            for i in range(0, octaves):
+                total += self._noise1_impl(x * freq, int(repeat * freq), base) * ampl
+                max_ampl += ampl
+                freq *= lacunarity
+                ampl *= persistence
+            res = total / max_ampl
+        else:
+            raise ValueError("Expected octaves value > 0")
 
-def py_noise3(
-    x,
-    y,
-    z,
-    octaves=1,
-    persistence=0.5,
-    lacunarity=2.0,
-    repeatx=1024,
-    repeaty=1024,
-    repeatz=1024,
-    base=0,
-):
-    """
-    perlin "improved" noise value for specified coordinate
+        return res
 
-    octaves -- specifies the number of passes for generating fBm noise,
-    defaults to 1 (simple noise).
+    @overload
+    def noise2(
+        self,
+        x: np.array,
+        y: Union[float, np.array],
+        octaves: int = 1,
+        persistence: float = 0.5,
+        lacunarity: float = 2.0,
+        repeat_x: int = 1024,
+        repeat_y: int = 1024,
+        base: int = 0,
+        grid_mode: bool = True,
+    ) -> np.array:
+        ...
 
-    persistence -- specifies the amplitude of each successive octave relative
-    to the one below it. Defaults to 0.5 (each higher octave's amplitude
-    is halved). Note the amplitude of the first pass is always 1.0.
+    @overload
+    def noise2(
+        self,
+        x: float,
+        y: float,
+        octaves: int = 1,
+        persistence: float = 0.5,
+        lacunarity: float = 2.0,
+        repeat_x: int = 1024,
+        repeat_y: int = 1024,
+        base: int = 0,
+        grid_mode: bool = True,
+    ) -> float:
+        ...
 
-    lacunarity -- specifies the frequency of each successive octave relative
-    to the one below it, similar to persistence. Defaults to 2.0.
+    def noise2(
+        self,
+        x,
+        y,
+        octaves=1,
+        persistence=0.5,
+        lacunarity=2.0,
+        repeat_x=1024,
+        repeat_y=1024,
+        base=0,
+        grid_mode=True,
+    ):
+        """2 dimensional perlin improved noise function (see _noise3_impl for more info)"""
+        scalar = isinstance(x, Number) and isinstance(y, Number)
 
-    repeatx, repeaty, repeatz -- specifies the interval along each axis when
-    the noise values repeat. This can be used as the tile size for creating
-    tileable textures
+        if not scalar:
+            x = np.array(x, dtype=float)
+            y = np.array(y, dtype=float)
+        else:
+            grid_mode = False
 
-    base -- specifies a fixed offset for the input coordinates. Useful for
-    generating different noise textures with the same repeat interval"
-    """
-    x = np.array(x, dtype=float)
-    y = np.array(y, dtype=float)
-    z = np.array(z, dtype=float)
-
-    if octaves == 1:
-        # Single octave, return simple noise
-        return noise3(x, y, z, repeatx, repeaty, repeatz, base)
-    elif octaves > 1:
-        freq = 1.0
-        amp = 1.0
-        max = 0.0
-        total = 0.0
-        for i in range(0, octaves):
-            total += (
-                noise3(
-                    x * freq,
-                    y * freq,
-                    z * freq,
-                    int(repeatx * freq),
-                    int(repeaty * freq),
-                    int(repeatz * freq),
-                    base,
+        if octaves == 1:
+            res = self._noise2_impl(x, y, repeat_x, repeat_y, base, grid_mode)
+        elif octaves > 1:
+            freq = 1.0
+            ampl = 1.0
+            max_ampl = 0.0
+            total = 0.0
+            for i in range(0, octaves):
+                total += (
+                    self._noise2_impl(
+                        x * freq,
+                        y * freq,
+                        int(repeat_x * freq),
+                        int(repeat_y * freq),
+                        base,
+                        grid_mode,
+                    )
+                    * ampl
                 )
-                * amp
+                max_ampl += ampl
+                freq *= lacunarity
+                ampl *= persistence
+            res = total / max_ampl
+        else:
+            raise ValueError("Expected octaves value > 0")
+
+        if scalar or not grid_mode:
+            return res
+        else:
+            return res[
+                0 if x.shape == () else slice(None),
+                0 if y.shape == () else slice(None),
+            ]
+
+    @overload
+    def noise3(
+        self,
+        x: np.array,
+        y: Union[float, np.array],
+        z: Union[float, np.array],
+        octaves: int = 1,
+        persistence: float = 0.5,
+        lacunarity: float = 2.0,
+        repeat_x: int = 1024,
+        repeat_y: int = 1024,
+        repeat_z: int = 1024,
+        base: int = 0,
+        grid_mode: bool = True,
+    ) -> np.array:
+        ...
+
+    @overload
+    def noise3(
+        self,
+        x: float,
+        y: float,
+        z: float,
+        octaves: int = 1,
+        persistence: float = 0.5,
+        lacunarity: float = 2.0,
+        repeat_x: int = 1024,
+        repeat_y: int = 1024,
+        repeat_z: int = 1024,
+        base: int = 0,
+        grid_mode: bool = True,
+    ) -> float:
+        ...
+
+    def noise3(
+        self,
+        x,
+        y,
+        z,
+        octaves=1,
+        persistence=0.5,
+        lacunarity=2.0,
+        repeat_x=1024,
+        repeat_y=1024,
+        repeat_z=1024,
+        base=0,
+        grid_mode=True,
+    ):
+        """
+        perlin "improved" noise value for specified coordinate
+
+        octaves -- specifies the number of passes for generating fBm noise,
+        defaults to 1 (simple noise).
+
+        persistence -- specifies the amplitude of each successive octave relative
+        to the one below it. Defaults to 0.5 (each higher octave's amplitude
+        is halved). Note the amplitude of the first pass is always 1.0.
+
+        lacunarity -- specifies the frequency of each successive octave relative
+        to the one below it, similar to persistence. Defaults to 2.0.
+
+        repeat_x, repeat_y, repeat_z -- specifies the interval along each axis when
+        the noise values repeat. This can be used as the tile size for creating
+        tileable textures
+
+        base -- specifies a fixed offset for the input coordinates. Useful for
+        generating different noise textures with the same repeat interval"
+        """
+
+        scalar = isinstance(x, Number) and isinstance(y, Number) and isinstance(z, Number)
+
+        if not scalar:
+            x = np.array(x, dtype=float)
+            y = np.array(y, dtype=float)
+            z = np.array(z, dtype=float)
+        else:
+            grid_mode = False
+
+        if octaves == 1:
+            res = self._noise3_impl(
+                x, y, z, repeat_x, repeat_y, repeat_z, base, grid_mode and not scalar
             )
-            max += amp
-            freq *= lacunarity
-            amp *= persistence
-        return total / max
-    else:
-        raise ValueError("Expected octaves value > 0")
+        elif octaves > 1:
+            freq = 1.0
+            ampl = 1.0
+            max_ampl = 0.0
+            total = 0.0
+            for i in range(0, octaves):
+                total += (
+                    self._noise3_impl(
+                        x * freq,
+                        y * freq,
+                        z * freq,
+                        int(repeat_x * freq),
+                        int(repeat_y * freq),
+                        int(repeat_z * freq),
+                        base,
+                        grid_mode and not scalar,
+                    )
+                    * ampl
+                )
+                max_ampl += ampl
+                freq *= lacunarity
+                ampl *= persistence
+            res = total / max_ampl
+        else:
+            raise ValueError("Expected octaves value > 0")
 
-
-if __name__ == "__main__":
-    import matplotlib.pyplot as plt
-
-    img = py_noise3(np.linspace(0, 1, 250), np.linspace(0, 1, 250), 0, octaves=4)
-    plt.imshow(img[..., 0])
-    plt.show()
-
-    #
-    # xx = np.linspace(0, 10, 1000)
-    # yy = py_noise3(xx, [0, 1], 100.0, octaves=4)[..., 0, 0]
-    #
-    # plt.plot(xx, yy)
-    # plt.show()
+        if scalar or not grid_mode:
+            return res
+        else:
+            return res[
+                0 if x.shape == () else slice(None),
+                0 if y.shape == () else slice(None),
+                0 if z.shape == () else slice(None),
+            ]
