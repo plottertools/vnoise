@@ -3,11 +3,11 @@ name: Lint and Tests
 on:
   push:
     branches:
-      - master
+      - main
       - release/*
   pull_request:
     branches:
-      - master
+      - main
       - release/*
 
 jobs:
@@ -32,6 +32,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
+        python -m pip install .
         python -m pip install mypy black isort
     - name: Python Code Quality and Lint
       uses: abey79/python-lint@master

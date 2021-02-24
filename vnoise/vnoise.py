@@ -12,27 +12,27 @@ def _lerp(t, a, b):
 
 
 def _grad1(
-    hash_value: Union[int, np.array], x: Union[float, np.array]
-) -> Union[float, np.array]:
+    hash_value: Union[int, np.ndarray], x: Union[float, np.ndarray]
+) -> Union[float, np.ndarray]:
     g = GRAD3[hash_value & 15]
     return x * g[..., 0]
 
 
 def _grad2(
-    hash_value: Union[int, np.array],
-    x: Union[float, np.array],
-    y: Union[float, np.array],
-) -> Union[float, np.array]:
+    hash_value: Union[int, np.ndarray],
+    x: Union[float, np.ndarray],
+    y: Union[float, np.ndarray],
+) -> Union[float, np.ndarray]:
     g = GRAD3[:, 0:2][hash_value & 15]
     return x * g[..., 0] + y * g[..., 1]
 
 
 def _grad3(
-    hash_value: Union[int, np.array],
-    x: Union[float, np.array],
-    y: Union[float, np.array],
-    z: Union[float, np.array],
-) -> Union[float, np.array]:
+    hash_value: Union[int, np.ndarray],
+    x: Union[float, np.ndarray],
+    y: Union[float, np.ndarray],
+    z: Union[float, np.ndarray],
+) -> Union[float, np.ndarray]:
     g = GRAD3[hash_value & 15]
     return x * g[..., 0] + y * g[..., 1] + z * g[..., 2]
 
@@ -45,17 +45,17 @@ class Noise:
         else:
             self._set_perm(PERM)
 
-    def seed(self, s: int):
+    def seed(self, s: int) -> None:
         perm = list(PERM)
         random.Random(s).shuffle(perm)
         self._set_perm(perm)
 
     def _set_perm(self, perm: Sequence[int]) -> None:
-        self._perm = np.array(perm * 2, dtype=np.uint8)
+        self._perm = np.array(list(perm) * 2, dtype=np.uint8)
 
     def _noise1_impl(
-        self, x: Union[float, np.array], repeat: int, base: int
-    ) -> Union[float, np.array]:
+        self, x: Union[float, np.ndarray], repeat: int, base: int
+    ) -> Union[float, np.ndarray]:
         i = np.floor(np.fmod(x, repeat)).astype(int)
         ii = np.fmod(i + 1, repeat)
         i = (i & 255) + base
@@ -71,13 +71,13 @@ class Noise:
 
     def _noise2_impl(
         self,
-        x: Union[float, np.array],
-        y: Union[float, np.array],
+        x: Union[float, np.ndarray],
+        y: Union[float, np.ndarray],
         repeat_x: int,
         repeat_y: int,
         base: int,
         grid_mode: bool,
-    ) -> Union[float, np.array]:
+    ) -> Union[float, np.ndarray]:
         i = np.floor(np.fmod(x, repeat_x)).astype(int)
         j = np.floor(np.fmod(y, repeat_y)).astype(int)
         ii = np.fmod(i + 1, repeat_x)
@@ -118,15 +118,15 @@ class Noise:
 
     def _noise3_impl(
         self,
-        x: Union[float, np.array],
-        y: Union[float, np.array],
-        z: Union[float, np.array],
+        x: Union[float, np.ndarray],
+        y: Union[float, np.ndarray],
+        z: Union[float, np.ndarray],
         repeat_x: int,
         repeat_y: int,
         repeat_z: int,
         base: int,
         grid_mode: bool,
-    ) -> Union[float, np.array]:
+    ) -> Union[float, np.ndarray]:
         i = np.floor(np.fmod(x, repeat_x)).astype(int)
         j = np.floor(np.fmod(y, repeat_y)).astype(int)
         k = np.floor(np.fmod(z, repeat_z)).astype(int)
@@ -199,18 +199,6 @@ class Noise:
     @overload
     def noise1(
         self,
-        x: np.array,
-        octaves: int = 1,
-        persistence: float = 0.5,
-        lacunarity: float = 2.0,
-        repeat: int = 1024,
-        base: int = 0,
-    ) -> np.array:
-        ...
-
-    @overload
-    def noise1(
-        self,
         x: float,
         octaves: int = 1,
         persistence: float = 0.5,
@@ -218,6 +206,18 @@ class Noise:
         repeat: int = 1024,
         base: int = 0,
     ) -> float:
+        ...
+
+    @overload
+    def noise1(
+        self,
+        x: np.ndarray,
+        octaves: int = 1,
+        persistence: float = 0.5,
+        lacunarity: float = 2.0,
+        repeat: int = 1024,
+        base: int = 0,
+    ) -> np.ndarray:
         ...
 
     def noise1(self, x, octaves=1, persistence=0.5, lacunarity=2.0, repeat=1024, base=0):
@@ -247,21 +247,6 @@ class Noise:
     @overload
     def noise2(
         self,
-        x: np.array,
-        y: Union[float, np.array],
-        octaves: int = 1,
-        persistence: float = 0.5,
-        lacunarity: float = 2.0,
-        repeat_x: int = 1024,
-        repeat_y: int = 1024,
-        base: int = 0,
-        grid_mode: bool = True,
-    ) -> np.array:
-        ...
-
-    @overload
-    def noise2(
-        self,
         x: float,
         y: float,
         octaves: int = 1,
@@ -272,6 +257,21 @@ class Noise:
         base: int = 0,
         grid_mode: bool = True,
     ) -> float:
+        ...
+
+    @overload
+    def noise2(
+        self,
+        x: np.ndarray,
+        y: Union[float, np.ndarray],
+        octaves: int = 1,
+        persistence: float = 0.5,
+        lacunarity: float = 2.0,
+        repeat_x: int = 1024,
+        repeat_y: int = 1024,
+        base: int = 0,
+        grid_mode: bool = True,
+    ) -> np.ndarray:
         ...
 
     def noise2(
@@ -332,23 +332,6 @@ class Noise:
     @overload
     def noise3(
         self,
-        x: np.array,
-        y: Union[float, np.array],
-        z: Union[float, np.array],
-        octaves: int = 1,
-        persistence: float = 0.5,
-        lacunarity: float = 2.0,
-        repeat_x: int = 1024,
-        repeat_y: int = 1024,
-        repeat_z: int = 1024,
-        base: int = 0,
-        grid_mode: bool = True,
-    ) -> np.array:
-        ...
-
-    @overload
-    def noise3(
-        self,
         x: float,
         y: float,
         z: float,
@@ -361,6 +344,23 @@ class Noise:
         base: int = 0,
         grid_mode: bool = True,
     ) -> float:
+        ...
+
+    @overload
+    def noise3(
+        self,
+        x: np.ndarray,
+        y: Union[float, np.ndarray],
+        z: Union[float, np.ndarray],
+        octaves: int = 1,
+        persistence: float = 0.5,
+        lacunarity: float = 2.0,
+        repeat_x: int = 1024,
+        repeat_y: int = 1024,
+        repeat_z: int = 1024,
+        base: int = 0,
+        grid_mode: bool = True,
+    ) -> np.ndarray:
         ...
 
     def noise3(
