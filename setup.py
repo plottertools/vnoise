@@ -13,13 +13,20 @@ setup(
     long_description=readme,
     long_description_content_type="text/markdown",
     author="Antoine Beyeler",
-    email="abeyeler@ab-ware.com",
-    url="https://github.com/vpype/vnoise",
+    author_email="abeyeler@ab-ware.com",
+    url="https://github.com/plottertools/vnoise",
     license=license_file,
     packages=["vnoise"],
     python_requires=">=3.6",
     install_requires=[
         "numpy>=1.19",
         "setuptools",
+    ],
+    classifiers=[
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3",
+        "Topic :: Multimedia :: Graphics",
+        "Typing :: Typed",
     ],
 )

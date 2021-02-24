@@ -2,3 +2,5 @@ black
 isort
 mypy
 pytest
+setuptools
+wheel
