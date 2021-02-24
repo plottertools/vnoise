@@ -1,10 +1,9 @@
+import pathlib
+
 from setuptools import setup
 
-with open("README.md") as f:
-    readme = f.read()
-
-with open("LICENSE") as f:
-    license_file = f.read()
+HERE = pathlib.Path(__file__).parent
+readme = (HERE / "README.md").read_text()
 
 setup(
     name="vnoise",
@@ -15,7 +14,7 @@ setup(
     author="Antoine Beyeler",
     author_email="abeyeler@ab-ware.com",
     url="https://github.com/plottertools/vnoise",
-    license=license_file,
+    license="MIT",
     packages=["vnoise"],
     python_requires=">=3.6",
     install_requires=[
