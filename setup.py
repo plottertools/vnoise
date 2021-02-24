@@ -7,7 +7,7 @@ readme = (HERE / "README.md").read_text()
 
 setup(
     name="vnoise",
-    version="0.1.0",
+    version="0.2.0a0",
     description="Vectorized, pure-Python Perlin noise library",
     long_description=readme,
     long_description_content_type="text/markdown",
