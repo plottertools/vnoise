@@ -51,7 +51,7 @@ jobs:
       - name: Build
         id: build
         run: |
-          pip install -r dev-requirement.txt
+          pip install -r dev-requirements.txt
           pip install .
           python setup.py sdist bdist_wheel
           echo ::set-output name=version::`python -c "import vnoise;print(vnoise.__version__)"`
