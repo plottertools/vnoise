@@ -10,7 +10,7 @@ Comparison of the following libraries:
 
 ```
 $ pip install -r requirements.txt
-$ pytest --benchmark-sort='name' --benchmark-group-by=func,param:octaves
+$ pytest --benchmark-sort=name --benchmark-group-by=func,param:octaves
 ```
 
 ## Results
