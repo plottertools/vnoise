@@ -1,0 +1,3 @@
+noise
+git+https://github.com/plottertools/pnoise#egg=pnoise
+pytest-benchmark
