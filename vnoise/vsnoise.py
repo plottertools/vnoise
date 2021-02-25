@@ -3,6 +3,8 @@
 // see LICENSE.txt for details
 // $Id$
 """
+import random
+from typing import Optional, Sequence
 
 import numpy as np
 
@@ -257,70 +259,84 @@ def _fbm_noise4_impl(x: float, y: float, z: float, w: float, octaves: int, persi
     return total / max
 
 
-def py_noise2(x, y, octaves=1, persistence=0.5, lacunarity=2.0, repeatx=None, repeaty=None, base=0):
-    """
-    noise2(x, y, octaves=1, persistence=0.5, lacunarity=2.0, repeatx=None, repeaty=None, base=0.0)
-    return simplex noise value for specified 2D coordinate.
-
-    octaves -- specifies the number of passes, defaults to 1 (simple noise).
-
-    persistence -- specifies the amplitude of each successive octave relative
-    to the one below it. Defaults to 0.5 (each higher octave's amplitude
-    is halved). Note the amplitude of the first pass is always 1.0.
-
-    lacunarity -- specifies the frequency of each successive octave relative
-    "to the one below it, similar to persistence. Defaults to 2.0.
-
-    repeatx, repeaty -- specifies the interval along each axis when
-    "the noise values repeat. This can be used as the tile size for creating
-    "tileable textures
-
-    base -- specifies a fixed offset for the noise coordinates. Useful for
-    generating different noise textures with the same repeat interval
-    """
-    z = 0.0
-
-    if octaves <= 0:
-        raise ValueError("Expected octaves value > 0")
-
-    if repeatx is None and repeaty is None:
-        # Flat noise, no tiling
-        freq = 1.0
-        amp = 1.0
-        max = 1.0
-        total = _snoise2_impl(x + z, y + z)
-
-        for i in range(1, octaves):
-            freq *= lacunarity
-            amp *= persistence
-            max += amp
-            total += _snoise2_impl(x * freq + z, y * freq + z) * amp
-
-        return total / max
-    else:  # Tiled noise
-        w = z
-        if repeaty is not None:
-            yf = y * 2.0 / repeaty
-            yr = repeaty * M_1_PI * 0.5
-            vy = np.sin(yf)  # originally fast_sin
-            vyz = np.cos(yf)  # originally fast_cos
-            y = vy * yr
-            w += vyz * yr
-            if repeatx is None:
-                return _fbm_noise3_impl(x, y, w, octaves, persistence, lacunarity)
-        if repeatx is not None:
-            xf = x * 2.0 / repeatx
-            xr = repeatx * M_1_PI * 0.5
-            vx = np.sin(xf)
-            vxz = np.cos(xf)
-            x = vx * xr
-            z += vxz * xr
-            if repeaty is None:
-                return _fbm_noise3_impl(x, y, z, octaves, persistence, lacunarity)
-        return _fbm_noise4_impl(x, y, z, w, octaves, persistence, lacunarity)
-
-
 class SNoise:
+    def __init__(self, seed: Optional[int] = None):
+
+        if seed is not None:
+            self.seed(seed)
+        else:
+            self._set_perm(PERM)
+
+    def seed(self, s: int) -> None:
+        perm = list(PERM)
+        random.Random(s).shuffle(perm)
+        self._set_perm(perm)
+
+    def _set_perm(self, perm: Sequence[int]) -> None:
+        self._perm = np.array(list(perm) * 2, dtype=np.uint8)
+
+    def noise2(self, x, y, octaves=1, persistence=0.5, lacunarity=2.0, repeatx=None, repeaty=None, base=0):
+        """
+        noise2(x, y, octaves=1, persistence=0.5, lacunarity=2.0, repeatx=None, repeaty=None, base=0.0)
+        return simplex noise value for specified 2D coordinate.
+
+        octaves -- specifies the number of passes, defaults to 1 (simple noise).
+
+        persistence -- specifies the amplitude of each successive octave relative
+        to the one below it. Defaults to 0.5 (each higher octave's amplitude
+        is halved). Note the amplitude of the first pass is always 1.0.
+
+        lacunarity -- specifies the frequency of each successive octave relative
+        "to the one below it, similar to persistence. Defaults to 2.0.
+
+        repeatx, repeaty -- specifies the interval along each axis when
+        "the noise values repeat. This can be used as the tile size for creating
+        "tileable textures
+
+        base -- specifies a fixed offset for the noise coordinates. Useful for
+        generating different noise textures with the same repeat interval
+        """
+        z = 0.0
+
+        if octaves <= 0:
+            raise ValueError("Expected octaves value > 0")
+
+        if repeatx is None and repeaty is None:
+            # Flat noise, no tiling
+            freq = 1.0
+            amp = 1.0
+            max = 1.0
+            total = _snoise2_impl(x + z, y + z)
+
+            for i in range(1, octaves):
+                freq *= lacunarity
+                amp *= persistence
+                max += amp
+                total += _snoise2_impl(x * freq + z, y * freq + z) * amp
+
+            return total / max
+        else:  # Tiled noise
+            w = z
+            if repeaty is not None:
+                yf = y * 2.0 / repeaty
+                yr = repeaty * M_1_PI * 0.5
+                vy = np.sin(yf)  # originally fast_sin
+                vyz = np.cos(yf)  # originally fast_cos
+                y = vy * yr
+                w += vyz * yr
+                if repeatx is None:
+                    return _fbm_noise3_impl(x, y, w, octaves, persistence, lacunarity)
+            if repeatx is not None:
+                xf = x * 2.0 / repeatx
+                xr = repeatx * M_1_PI * 0.5
+                vx = np.sin(xf)
+                vxz = np.cos(xf)
+                x = vx * xr
+                z += vxz * xr
+                if repeaty is None:
+                    return _fbm_noise3_impl(x, y, z, octaves, persistence, lacunarity)
+            return _fbm_noise4_impl(x, y, z, w, octaves, persistence, lacunarity)
+
     def noise3(self, x: float, y: float, z: float, octaves=1, persistence=0.5, lacunarity=2.0):
         """
         noise3(x, y, z, octaves=1, persistence=0.5, lacunarity=2.0) return simplex noise value for
