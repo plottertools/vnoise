@@ -292,12 +292,12 @@ class SNoise:
         self,
         x: float,
         y: float,
-        octaves=1,
-        persistence=0.5,
-        lacunarity=2.0,
-        repeatx=None,
-        repeaty=None,
-        base=0,
+        octaves: int = 1,
+        persistence: float = 0.5,
+        lacunarity: float = 2.0,
+        repeatx: Optional[int] = None,
+        repeaty: Optional[int] = None,
+        base: int = 0,
     ) -> float:
         """
         noise2(x, y, octaves=1, persistence=0.5, lacunarity=2.0, repeatx=None, repeaty=None, base=0.0)
