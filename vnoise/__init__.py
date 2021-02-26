@@ -1,4 +1,5 @@
 from .vnoise import Noise
+from .vsnoise import SNoise
 
 
 def _get_version() -> str:
