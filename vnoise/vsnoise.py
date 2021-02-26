@@ -55,7 +55,9 @@ def _snoise2_impl(x: float, y: float) -> float:
 
     for c in range(0, 3):
         if f[c] > 0:
-            noise[c] = f[c] * f[c] * f[c] * f[c] * (GRAD3[g[c]][0] * xx[c] + GRAD3[g[c]][1] * yy[c])
+            noise[c] = (
+                f[c] * f[c] * f[c] * f[c] * (GRAD3[g[c]][0] * xx[c] + GRAD3[g[c]][1] * yy[c])
+            )
 
     return (noise[0] + noise[1] + noise[2]) * 70.0
 
@@ -88,7 +90,7 @@ def _snoise3_impl(x: float, y: float, z: float) -> float:
     k = np.floor(z + s)
     t = (i + j + k) * G3
 
-    pos = np.zeros((4, 3), dtype='float')
+    pos = np.zeros((4, 3), dtype="float")
     # float pos[4][3];
 
     pos[0][0] = x - (i - t)
@@ -139,7 +141,9 @@ def _snoise3_impl(x: float, y: float, z: float) -> float:
     return (noise[0] + noise[1] + noise[2] + noise[3]) * 32.0
 
 
-def _fbm_noise3_impl(x: float, y: float, z: float, octaves: int, persistence: float, lacunarity: float) -> float:
+def _fbm_noise3_impl(
+    x: float, y: float, z: float, octaves: int, persistence: float, lacunarity: float
+) -> float:
     freq = 1.0
     amp = 1.0
     max = 1.0
@@ -175,7 +179,14 @@ def _noise4_impl(x: float, y: float, z: float, w: float) -> float:
     z0 = z - (k - t)
     w0 = w - (l - t)
 
-    c = (x0 > y0) * 32 + (x0 > z0) * 16 + (y0 > z0) * 8 + (x0 > w0) * 4 + (y0 > w0) * 2 + (z0 > w0)
+    c = (
+        (x0 > y0) * 32
+        + (x0 > z0) * 16
+        + (y0 > z0) * 8
+        + (x0 > w0) * 4
+        + (y0 > w0) * 2
+        + (z0 > w0)
+    )
     i1 = SIMPLEX[c][0] >= 3
     j1 = SIMPLEX[c][1] >= 3
     k1 = SIMPLEX[c][2] >= 3
@@ -210,11 +221,11 @@ def _noise4_impl(x: float, y: float, z: float, w: float) -> float:
     J = int(j & 255)
     K = int(k & 255)
     L = int(l & 255)
-    gi0 = PERM[I + PERM[J + PERM[K + PERM[L]]]] & 0x1f
-    gi1 = PERM[I + i1 + PERM[J + j1 + PERM[K + k1 + PERM[L + l1]]]] & 0x1f
-    gi2 = PERM[I + i2 + PERM[J + j2 + PERM[K + k2 + PERM[L + l2]]]] & 0x1f
-    gi3 = PERM[I + i3 + PERM[J + j3 + PERM[K + k3 + PERM[L + l3]]]] & 0x1f
-    gi4 = PERM[I + 1 + PERM[J + 1 + PERM[K + 1 + PERM[L + 1]]]] & 0x1f
+    gi0 = PERM[I + PERM[J + PERM[K + PERM[L]]]] & 0x1F
+    gi1 = PERM[I + i1 + PERM[J + j1 + PERM[K + k1 + PERM[L + l1]]]] & 0x1F
+    gi2 = PERM[I + i2 + PERM[J + j2 + PERM[K + k2 + PERM[L + l2]]]] & 0x1F
+    gi3 = PERM[I + i3 + PERM[J + j3 + PERM[K + k3 + PERM[L + l3]]]] & 0x1F
+    gi4 = PERM[I + 1 + PERM[J + 1 + PERM[K + 1 + PERM[L + 1]]]] & 0x1F
     # float t0, t1, t2, t3, t4;
 
     t0 = 0.6 - x0 * x0 - y0 * y0 - z0 * z0 - w0 * w0
@@ -245,7 +256,9 @@ def _noise4_impl(x: float, y: float, z: float, w: float) -> float:
     return 27.0 * (noise[0] + noise[1] + noise[2] + noise[3] + noise[4])
 
 
-def _fbm_noise4_impl(x: float, y: float, z: float, w: float, octaves: int, persistence: float, lacunarity: float) -> float:
+def _fbm_noise4_impl(
+    x: float, y: float, z: float, w: float, octaves: int, persistence: float, lacunarity: float
+) -> float:
     freq = 1.0
     amp = 1.0
     max = 1.0
@@ -275,7 +288,17 @@ class SNoise:
     def _set_perm(self, perm: Sequence[int]) -> None:
         self._perm = np.array(list(perm) * 2, dtype=np.uint8)
 
-    def noise2(self, x, y, octaves=1, persistence=0.5, lacunarity=2.0, repeatx=None, repeaty=None, base=0):
+    def noise2(
+        self,
+        x,
+        y,
+        octaves=1,
+        persistence=0.5,
+        lacunarity=2.0,
+        repeatx=None,
+        repeaty=None,
+        base=0,
+    ):
         """
         noise2(x, y, octaves=1, persistence=0.5, lacunarity=2.0, repeatx=None, repeaty=None, base=0.0)
         return simplex noise value for specified 2D coordinate.
@@ -359,7 +382,16 @@ class SNoise:
         else:
             raise ValueError("Expected octaves value > 0")
 
-    def noise4(self, x: float, y: float, z: float, w: float, octaves=1, persistence=0.5, lacunarity=2.0):
+    def noise4(
+        self,
+        x: float,
+        y: float,
+        z: float,
+        w: float,
+        octaves=1,
+        persistence=0.5,
+        lacunarity=2.0,
+    ):
         """
         noise4(x, y, z, w, octaves=1, persistence=0.5, lacunarity=2.0) return simplex noise value for
         specified 4D coordinate
