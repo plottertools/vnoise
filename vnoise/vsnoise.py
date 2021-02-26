@@ -4,21 +4,18 @@
 // $Id$
 """
 import random
+from math import floor
 from typing import Optional, Sequence
 
 import numpy as np
 
-from ._tables import PERM, GRAD4, GRAD3, M_1_PI, SIMPLEX
-
+from ._tables import GRAD3, GRAD4, M_1_PI, PERM, SIMPLEX
 
 "Native-code simplex noise functions"
 
 # 2D simplex skew factors
 F2 = 0.3660254037844386  # 0.5 * (sqrt(3.0) - 1.0)
 G2 = 0.21132486540518713  # (3.0 - sqrt(3.0)) / 6.0
-
-from math import floor
-
 
 def _snoise2_impl(x: float, y: float) -> float:
     s = (x + y) * F2
