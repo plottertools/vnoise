@@ -298,7 +298,7 @@ class SNoise:
         repeatx=None,
         repeaty=None,
         base=0,
-    ):
+    ) -> float:
         """
         noise2(x, y, octaves=1, persistence=0.5, lacunarity=2.0, repeatx=None, repeaty=None, base=0.0)
         return simplex noise value for specified 2D coordinate.
@@ -360,7 +360,15 @@ class SNoise:
                     return _fbm_noise3_impl(x, y, z, octaves, persistence, lacunarity)
             return _fbm_noise4_impl(x, y, z, w, octaves, persistence, lacunarity)
 
-    def noise3(self, x: float, y: float, z: float, octaves=1, persistence=0.5, lacunarity=2.0):
+    def noise3(
+        self,
+        x: float,
+        y: float,
+        z: float,
+        octaves: int = 1,
+        persistence: float = 0.5,
+        lacunarity: float = 2.0,
+    ) -> float:
         """
         noise3(x, y, z, octaves=1, persistence=0.5, lacunarity=2.0) return simplex noise value for
         specified 3D coordinate
@@ -388,10 +396,10 @@ class SNoise:
         y: float,
         z: float,
         w: float,
-        octaves=1,
-        persistence=0.5,
-        lacunarity=2.0,
-    ):
+        octaves: int = 1,
+        persistence: float = 0.5,
+        lacunarity: float = 2.0,
+    ) -> float:
         """
         noise4(x, y, z, w, octaves=1, persistence=0.5, lacunarity=2.0) return simplex noise value for
         specified 4D coordinate
