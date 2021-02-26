@@ -290,8 +290,8 @@ class SNoise:
 
     def noise2(
         self,
-        x,
-        y,
+        x: float,
+        y: float,
         octaves=1,
         persistence=0.5,
         lacunarity=2.0,
